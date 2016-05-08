@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:mvc="http://www.springframework.org/schema/mvc" xmlns:aop="http://www.springframework.org/schema/aop"
+	xmlns:tx="http://www.springframework.org/schema/tx" xmlns:security="http://www.springframework.org/schema/security"
+	xsi:schemaLocation="
+		http://www.springframework.org/schema/beans	http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
+		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-3.0.xsd
+		http://www.springframework.org/schema/mvc http://www.springframework.org/schema/mvc/spring-mvc-3.0.xsd
+	    http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-3.0.xsd
+	    http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-3.0.xsd
+	    http://www.springframework.org/schema/security 
+		http://www.springframework.org/schema/security/spring-security-3.0.xsd">
+
+	<bean
+		class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+		<property name="prefix" value="/WEB-INF/views/" />
+		<property name="suffix" value=".jsp" />
+	</bean>
+
+	<!-- Configura aonde o Spring deve buscar por beans anotados -->
+	<context:component-scan base-package="br.com.caelum.estoque" />
+
+	<!-- Configurações da fonte de dados -->
+	<bean id="dataSource"
+		class="org.springframework.jdbc.datasource.DriverManagerDataSource">
+		<property name="driverClassName" value="com.mysql.jdbc.Driver" />
+		<property name="url" value="jdbc:mysql://localhost/fj27" />
+		<property name="username" value="wmoreira" />
+		<property name="password" value="well1986" />
+	</bean>
+
+	<!-- Mapeando o Message Properties -->
+	<bean id="messageSource"
+		class="org.springframework.context.support.ReloadableResourceBundleMessageSource">
+		<property name="basename" value="WEB-INF/ii8n/messages"></property>
+	</bean>
+	<bean id="sessionFactory"
+		class="org.springframework.orm.hibernate3.annotation.AnnotationSessionFactoryBean">
+		<property name="dataSource" ref="dataSource" />
+		<property name="hibernateProperties">
+
+			<props>
+
+				<!-- <prop key="hibernate.dialect">org.hibernate.dialect.MySQLDialect</prop> -->
+				<prop key="hibernate.dialect">org.hibernate.dialect.MySQL5InnoDBDialect</prop>
+				<prop key="hibernate.show_sql">true</prop>
+				<prop key="hibernate.format_sql">auto</prop>
+				<prop key="hibernate.hbm2ddl.auto">update</prop>
+				<!-- <prop key="hibernate.connection.autocommit">true</prop> -->
+
+
+			</props>
+		</property>
+		<property name="annotatedClasses">
+			<list>
+				<value>br.com.caelum.estoque.Produto</value>
+				<value>br.com.caelum.estoque.Movimentacao</value>
+				<value>br.com.caelum.estoque.Grupo</value>
+				<value>br.com.caelum.estoque.Usuario</value>
+			</list>
+		</property>
+	</bean>
+	<!-- HABILITA AS TRANSAÇÔES PARA O SPRING GERENCIAR -->
+	<bean id="transactionManager"
+		class="org.springframework.orm.hibernate3.HibernateTransactionManager">
+		<property name="sessionFactory" ref="sessionFactory" />
+	</bean>
+
+	<security:authentication-manager>
+		<security:authentication-provider
+			user-service-ref="usuarioHibernateDao" />
+	</security:authentication-manager>
+
+
+	<security:http auto-config="true" access-denied-page="/login.html" >
+		<security:intercept-url pattern="/produtos/lista.html"
+			access="ROLE_USER,ROLE_ADM" />
+		<security:intercept-url pattern="/produtos/**"
+			access="ROLE_ADM" />
+		<security:form-login login-page="/login.html"
+			always-use-default-target="true" default-target-url="/produtos/lista.html"
+			login-processing-url="/login" />
+		<security:logout logout-url="/logout"
+			logout-success-url="/login.html" />
+	</security:http>
+
+	
+	<mvc:annotation-driven />
+	<tx:annotation-driven />
+</beans>
